@@ -50,18 +50,24 @@ class BaseDataModel(metaclass=ABCMeta):
     }
     _units_long = [key for key in _unit_data.keys()]
     _units_short = [value['unit'].lower() for value in _unit_data.values()]
+    
+    #unit = _unit_data[__name__.lower()]
 
     def __init__(self, value: float, bits: bool = False):
         self.formatted = True
         self.value = value / 8 if bits else value
+        
+        self.unit = self.__class__._unit_data[self.__class__.__name__.lower()]['unit']
+        self.conversion_factor = self.__class__._unit_data[self.__class__.__name__.lower()]['conversion_factor']
 
-    def _validate_int(func):
+    def _validate(func):
         @wraps(func)
         def wrapper(self, other):
-            if not (isinstance(other, int) or 
-                    isinstance(other, float) or
-                    isinstance(other, self.__class__)):
-                raise TypeError
+            if type(other).__name__ not in globals():
+                if not (isinstance(other, int) or 
+                        isinstance(other, float) or
+                        isinstance(other, self.__class__)):
+                    raise TypeError
             return func(self, other)
         return wrapper
 
@@ -70,90 +76,89 @@ class BaseDataModel(metaclass=ABCMeta):
 
     def __str__(self):
         if self.formatted:
-            return f'{_format(self.value)} {self.__class__.unit()}'
-        return f'{self.value} {self.__class__.unit()}'
+            return f'{_format(self.value)} {self.unit}'
+        return f'{self.value} {self.unit}'
+    
+    def to_bytes(self):
+        return self.convert('byte').value
 
-    @_validate_int
+    @_validate
     def __add__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value + other)
-        return self.__class__(self.value + other.value)
+        return Byte(self.to_bytes() + other.to_bytes()).convert(self.unit.lower())
 
-    @_validate_int
+    @_validate
     def __sub__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value - other)
-        return self.__class__(self.value - other.value)
+        return Byte(self.to_bytes() - other.to_bytes()).convert(self.unit.lower())
     
-    @_validate_int
+    @_validate
     def __mul__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value * other)
-        return self.__class__(self.value * other.value)
+        return Byte(self.to_bytes() * other.to_bytes()).convert(self.unit.lower())
     
-    @_validate_int
+    @_validate
     def __truediv__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value // other)
-        return self.__class__(self.value // other.value)
+        return Byte(self.to_bytes() // other.to_bytes()).convert(self.unit.lower())
     
-    @_validate_int
+    @_validate
     def __iadd__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value + other)
-        return self.__class__(self.value + other.value)
+        return Byte(self.to_bytes() + other.to_bytes()).convert(self.unit.lower())
 
-    @_validate_int
+    @_validate
     def __isub__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value - other)
-        return self.__class__(self.value - other.value)
+        return Byte(self.to_bytes() - other.to_bytes()).convert(self.unit.lower())
     
-    @_validate_int
+    @_validate
     def __imul__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value * other)
-        return self.__class__(self.value * other.value)
+        return Byte(self.to_bytes() * other.to_bytes()).convert(self.unit.lower())
     
-    @_validate_int
+    @_validate
     def __itruediv__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
             return self.__class__(self.value // other)
-        return self.__class__(self.value // other.value)
+        return Byte(self.to_bytes() // other.to_bytes()).convert(self.unit.lower())
 
-    @_validate_int
+    @_validate
     def __eq__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value == other)
-        return self.__class__(self.value == other.value)
+            return self.value == other
+        return self.to_bytes() == other.to_bytes()
     
-    @_validate_int
+    @_validate
     def __lt__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value < other)
-        return self.__class__(self.value < other.value)
+            return self.value < other
+        return self.to_bytes() < other.to_bytes()
 
-    @_validate_int
+    @_validate
     def __gt__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value > other)
-        return self.__class__(self.value > other.value)
+            return self.value > other
+        return self.to_bytes() > other.to_bytes()
     
-    @_validate_int
+    @_validate
     def __le__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value <= other)
-        return self.__class__(self.value <= other.value)
+            return self.value <= other
+        return self.to_bytes() <= other.to_bytes()
 
-    @_validate_int
+    @_validate
     def __ge__(self, other):
         if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value >= other)
-        return self.__class__(self.value >= other.value)
-
-    @classmethod
-    def unit(cls):
-        return cls._unit_data[cls.__name__.lower()]['unit']
+            return self.value >= other
+        return self.to_bytes() >= other.to_bytes()
 
     def _conversion_factor(self):
         return self.__class__._unit_data[self.__class__.__name__.lower()]['conversion_factor']
