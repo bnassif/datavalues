@@ -4,10 +4,13 @@ from abc import ABCMeta
 from functools import wraps
 
 def _format(num: float):
-    # Remove decimal from float as its own float trailing 0 (i.e. 0.523)
-    decimal = float(f"0.{str(num).split('.')[1]}")
-    # Return non-decimal with commas, and rounded decimal appended
-    return f"{'{:,}'.format(int(num))}.{str(round(decimal, 2)).split('.')[1]}"
+    try:
+        # Remove decimal from float as its own float trailing 0 (i.e. 0.523)
+        decimal = float(f"0.{str(num).split('.')[1]}")
+        # Return non-decimal with commas, and rounded decimal appended
+        return f"{'{:,}'.format(int(num))}.{str(round(decimal, 2)).split('.')[1]}"
+    except IndexError:
+        return f"{'{:,}'.format(int(num))}"
 
 class BaseDataModel(metaclass=ABCMeta):
     _unit_data = {
