@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-
-def read(filename):
-    with open(filename, encoding='utf8', errors='ignore') as file:
-        return file.read()
+import re
 
     
 def get_version():
     # type: () -> str
     """Get the version string from the module's __init__ file."""
     with open("data/__init__.py") as init:
-        for line in init.readlines():
-            if '__version__' in line:
-                return line.split('"')[1]
+        version = re.search(r'[\'"]\S\d*.\d*.\d*\S*[\'"]', init.read())
+        return version.group().strip('"').strip("'")
+
 
 setup(
     name="datavalues",

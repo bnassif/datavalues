@@ -13,55 +13,57 @@ def _format(num: float):
         return f"{'{:,}'.format(int(num))}"
 
 class BaseDataModel(metaclass=ABCMeta):
-    _unit_data = {
-        'byte': {
-            'unit': 'B',
-            'conversion_factor': int(f'1{"000" * 0}'),
-        },
-        'kilobyte': {
-            'unit': 'KB',
-            'conversion_factor': int(f'1{"000" * 1}'),
-        },
-        'megabyte': {
-            'unit': 'MB',
-            'conversion_factor': int(f'1{"000" * 2}'),
-        },
-        'gigabyte': {
-            'unit': 'GB',
-            'conversion_factor': int(f'1{"000" * 3}'),
-        },
-        'terabyte': {
-            'unit': 'TB',
-            'conversion_factor': int(f'1{"000" * 4}'),
-        },
-        'petabyte': {
-            'unit': 'PB',
-            'conversion_factor': int(f'1{"000" * 5}'),
-        },
-        'exabyte': {
-            'unit': 'EB',
-            'conversion_factor': int(f'1{"000" * 6}'),
-        },
-        'zettabyte': {
-            'unit': 'ZB',
-            'conversion_factor': int(f'1{"000" * 7}'),
-        },
-        'yottabyte': {
-            'unit': 'YB',
-            'conversion_factor': int(f'1{"000" * 8}'),
-        },
-    }
-    _units_long = [key for key in _unit_data.keys()]
-    _units_short = [value['unit'].lower() for value in _unit_data.values()]
-    
-    #unit = _unit_data[__name__.lower()]
+    _base_factor = 1000
 
-    def __init__(self, value: float, bits: bool = False):
+    def __init__(self, value: float, base: int = 1000, bits: bool = False):
+        assert base in [1000, 1024], 'Base must be value 1000 or 1024'
+        self._base_factor = base
+        self._unit_data = {
+            'byte': {
+                'unit': 'B',
+                'conversion_factor': self._base_factor ** 0,
+            },
+            'kilobyte': {
+                'unit': 'KB',
+                'conversion_factor': self._base_factor ** 1,
+            },
+            'megabyte': {
+                'unit': 'MB',
+                'conversion_factor': self._base_factor ** 2,
+            },
+            'gigabyte': {
+                'unit': 'GB',
+                'conversion_factor': self._base_factor ** 3,
+            },
+            'terabyte': {
+                'unit': 'TB',
+                'conversion_factor': self._base_factor ** 4,
+            },
+            'petabyte': {
+                'unit': 'PB',
+                'conversion_factor': self._base_factor ** 5,
+            },
+            'exabyte': {
+                'unit': 'EB',
+                'conversion_factor': self._base_factor ** 6,
+            },
+            'zettabyte': {
+                'unit': 'ZB',
+                'conversion_factor': self._base_factor ** 7,
+            },
+            'yottabyte': {
+                'unit': 'YB',
+                'conversion_factor': self._base_factor ** 8,
+            },
+        }
+        self._units_long = [key for key in self._unit_data.keys()]
+        self._units_short = [value['unit'].lower() for value in self._unit_data.values()]
+
+        self.unit = self._unit_data[self.__class__.__name__.lower()]['unit']
+        self.conversion_factor = self._unit_data[self.__class__.__name__.lower()]['conversion_factor']
+
         self.formatted = True
         self.value = value / 8 if bits else value
-        
-        self.unit = self.__class__._unit_data[self.__class__.__name__.lower()]['unit']
-        self.conversion_factor = self.__class__._unit_data[self.__class__.__name__.lower()]['conversion_factor']
 
     def _validate(func):
         @wraps(func)
@@ -72,7 +74,7 @@ class BaseDataModel(metaclass=ABCMeta):
                         isinstance(other, float) or
                         issubclass(other, float) or # Allow subclasses for third-party compatibility
                         issubclass(other.__class__, BaseDataModel)):
-                    raise TypeError('Must either pass a float/int or an object from data.data')
+                    raise TypeError(f'Must either pass a float/int or an object from {self.__module__}')
             return func(self, other)
         return wrapper
 
@@ -89,127 +91,145 @@ class BaseDataModel(metaclass=ABCMeta):
 
     @_validate
     def __add__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value + other)
-        return Byte(self.to_bytes() + other.to_bytes()).convert(self.unit.lower())
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value + other, base=self._base_factor)
+        return Byte(self.to_bytes() + other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __sub__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value - other)
-        return Byte(self.to_bytes() - other.to_bytes()).convert(self.unit.lower())
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value - other, base=self._base_factor)
+        return Byte(self.to_bytes() - other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
     
     @_validate
     def __mul__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value * other)
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value * other, base=self._base_factor)
         raise TypeError('Cannot multiply data objects')
     
     @_validate
     def __truediv__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value / other)
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value / other, base=self._base_factor)
         return self.to_bytes() / other.to_bytes()
     
     @_validate
     def __floordiv__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value // other)
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value // other, base=self._base_factor)
         return self.to_bytes() // other.to_bytes()
     
     @_validate
     def __iadd__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value + other)
-        return Byte(self.to_bytes() + other.to_bytes()).convert(self.unit.lower())
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value + other, base=self._base_factor)
+        return Byte(self.to_bytes() + other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __isub__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value - other)
-        return Byte(self.to_bytes() - other.to_bytes()).convert(self.unit.lower())
-    
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value - other, base=self._base_factor)
+        return Byte(self.to_bytes() - other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
+
     @_validate
     def __imul__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value * other)
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value * other, base=self._base_factor)
         raise TypeError('Cannot multiply data objects')
     
     @_validate
     def __itruediv__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value / other)
-        return self.to_bytes() / other.to_bytes()
-    
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value / other, base=self._base_factor)
+        return Byte(self.to_bytes() / other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
+
     @_validate
     def __ifloordiv__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
-            return self.__class__(self.value // other)
-        return self.to_bytes() // other.to_bytes()
+        if not issubclass(other.__class__, BaseDataModel):
+            return self.__class__(self.value // other, base=self._base_factor)
+        return Byte(self.to_bytes() // other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __eq__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
+        if not issubclass(other.__class__, BaseDataModel):
             return self.value == other
         return self.to_bytes() == other.to_bytes()
     
     @_validate
     def __lt__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
+        if not issubclass(other.__class__, BaseDataModel):
             return self.value < other
         return self.to_bytes() < other.to_bytes()
 
     @_validate
     def __gt__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
+        if not issubclass(other.__class__, BaseDataModel):
             return self.value > other
         return self.to_bytes() > other.to_bytes()
     
     @_validate
     def __le__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
+        if not issubclass(other.__class__, BaseDataModel):
             return self.value <= other
         return self.to_bytes() <= other.to_bytes()
 
     @_validate
     def __ge__(self, other):
-        if (isinstance(other, int) or isinstance(other, float)):
+        if not issubclass(other.__class__, BaseDataModel):
             return self.value >= other
         return self.to_bytes() >= other.to_bytes()
 
+    @property
     def _conversion_factor(self):
-        return self.__class__._unit_data[self.__class__.__name__.lower()]['conversion_factor']
+        return self._unit_data[self.__class__.__name__.lower()]['conversion_factor']
 
     def convert(self, unit):
         # Return top-level unit name if abbreviated name was supplied
-        if unit.lower() in self.__class__._unit_data:
+        if unit.lower() in self._unit_data:
             unit = unit.lower()
         else:
-            unit = dict((value['unit'].lower(), key) for key, value in self.__class__._unit_data.items()).get(unit.lower())
+            unit = dict((value['unit'].lower(), key) for key, value in self._unit_data.items()).get(unit.lower())
         try:
             dest_class = unit.title().replace('b','B')
             if dest_class in globals():
-                return globals()[dest_class](self.value * self._conversion_factor() / self.__class__._unit_data[unit]['conversion_factor'])
+                return globals()[dest_class](self.value * self._conversion_factor / self._unit_data[unit]['conversion_factor'])
             else:
                 raise RuntimeError(f'You must import data.data.{dest_class} to convert to {unit}.')
         except KeyError:
-            raise ValueError(f"Invalid unit specified ({unit}). Select a valid unit: {self.__class__._units_short} ")
+            raise ValueError(f"Invalid unit specified ({unit}). Select a valid unit: {self._units_short} ")
+
 
 class Byte(BaseDataModel):
     ...
+
+
 class KiloByte(BaseDataModel):
     ...
+
+
 class MegaByte(BaseDataModel):
     ...
+
+
 class GigaByte(BaseDataModel):
     ...
+
+
 class TeraByte(BaseDataModel):
     ...
+
+
 class PetaByte(BaseDataModel):
     ...
+
+
 class ExaByte(BaseDataModel):
     ...
+
+
 class ZettaByte(BaseDataModel):
     ...
+
+
 class YottaByte(BaseDataModel):
     ...
