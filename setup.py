@@ -3,6 +3,10 @@
 from setuptools import setup
 import re
 
+
+def read(filename):
+    with open(filename, encoding='utf8', errors='ignore') as file:
+        return file.read()
     
 def get_version():
     # type: () -> str
