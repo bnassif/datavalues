@@ -1,19 +1,25 @@
 # Data Values
+[![Pypi](https://img.shields.io/pypi/v/datavalues)](https://pypi.org/project/datavalues)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/Scraps23/datavalues/main/LICENSE)
+![GitHub Release Date](https://img.shields.io/github/release-date/Scraps23/datavalues)
 
-Simple package for managing data sizes including conversions and operations
+Simple package for managing data units including conversions and operations
 
 ## Installation
 
 ```python
-python -m pip install git+'https://github.com/Scraps23/datavalues.git' 
+# PyPi Installation
+pip install datavalues
+# GitHub Installation
+pip install git+'https://github.com/Scraps23/datavalues.git' 
 ```
 
 ## Getting Started
 
 The package is a collection of sub-classed object classes for each data unit.
-To import all the object classes, use the code below:
+To import all the object classes, use the import below in your code:
 ```python
-from data import *
+from data.units import *
 ```
 This is the import method used for all examples below.
 ### Object Classes
@@ -45,7 +51,7 @@ import os
 as_gb = MegaByte(100).convert('gb')
 # This is especially useful for bytes-based systems and human-readable input being merged
 selected_size = GigaByte(float(input('How many gigabytes? : ')))
-os.environ['disk_size_var'] = 500000000000
+os.environ['disk_size_var'] = selected_size.convert('b')
 ```
 ### Operators
 Data objects can have math applied against them, and be compared to each other and int/float objects to simplify operations like calculating total disk usage, RAID viability, and more.
