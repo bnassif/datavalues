@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for tags/version)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Tests
+        run: |
+          # Install the checked-out version
+          python -m pip install ./
+          # Install pytest
+          python -m pip install pytest
+          # Run all tests
+          make run_tests

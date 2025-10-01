@@ -1,101 +1,138 @@
-# Data Values
+# DataValues
 [![Pypi](https://img.shields.io/pypi/v/datavalues)](https://pypi.org/project/datavalues)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/Scraps23/datavalues/main/LICENSE)
-![GitHub Release Date](https://img.shields.io/github/release-date/Scraps23/datavalues)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/bnassif/datavalues/main/LICENSE)
+![GitHub Release Date](https://img.shields.io/github/release-date/bnassif/datavalues)
 
-Simple package for managing data units including conversions and operations
+DataValues is a Python package for handling data sizes (bits/bytes) with full support for both SI (decimal) and IEC (binary) prefixes.
+
+Many systems disagree on how to report storage or memory sizes:
+
+- Proxmox VE reports in GiB (binary).
+- NetBox reports in GB (decimal).
+- Vendors often switch between bits vs bytes.
+
+This package smooths out those inconsistencies by providing an object-oriented interface for conversion, arithmetic, and comparison across all supported units.
+
+## Features
+
+- Supports bits and bytes.
+- Full range of SI (kilo, mega, giga, …) and IEC (kibi, mebi, gibi, …) units.
+- Accurate conversions between decimal/binary forms.
+- Intuitive comparisons (>, <, ==, >=, <=).
+- Safe arithmetic with unit awareness (+, -, *, /, +=, etc.).
+- Simple API that feels natural in Python.
 
 ## Installation
 
-```python
+```bash
 # PyPi Installation
 pip install datavalues
 # GitHub Installation
-pip install git+'https://github.com/Scraps23/datavalues.git' 
+pip install git+'https://github.com/bnassif/datavalues.git' 
 ```
 
 ## Getting Started
 
-The package is a collection of sub-classed object classes for each data unit.
-To import all the object classes, use the import below in your code:
+### Coversion
 ```python
-from data.units import *
-```
-This is the import method used for all examples below.
-### Object Classes
-There are nine 9 object classes, each named for the unit they represent.
-- Byte
-- KiloByte
-- MegaByte
-- GigaByte
-- TeraByte
-- PetaByte
-- ExaByte
-- YottaByte
-- ZettaByte
-## Usage
-Each of the object classes sub-classes the BaseDataModel which allows for arithmetic and comparison operators, and a shared `convert` method.
-### Conversion
-The conversion method is non-destructive and relies upon the class name of the data object. Changing the names of the class(es) on import will break functionality.
-```python
-# Converting the object does not alter it, it returns a new object
-as_mb = MegaByte(100)
-as_gb = as_mb.convert('gb')
-print(as_mb, as_gb)
-## RETURNS:
-100 MB 0.1 GB
-```
-```python
-import os
-# Conversion can be done in-line to reduce memory usage
-as_gb = MegaByte(100).convert('gb')
-# This is especially useful for bytes-based systems and human-readable input being merged
-selected_size = GigaByte(float(input('How many gigabytes? : ')))
-os.environ['disk_size_var'] = selected_size.convert('b')
-```
-### Operators
-Data objects can have math applied against them, and be compared to each other and int/float objects to simplify operations like calculating total disk usage, RAID viability, and more.
+from datavalues import *
 
-#### Arithmetic Operators
-The mathematical operators allow objects of different classes to interact; if another data object is supplied as the other value, both values are converted to bytes, evaluated, and converted back to the original unit.
-Otherwise, if an integer or float is supplied, it is assumed that value is in the same unit as the original unit.
+# 1 MB (decimal) to bytes
+print(MegaByte(1).convert(Byte))   # 1000000
 
-```python
-current_disk = GigaByte(1270)
-end_goal = TeraByte(2)
-# Will return in Terabytes (0.73 TB)
-print(end_goal - current_disk)
-# Will return in Gigabytes (730.0 GB)
-print((end_goal - current_disk).convert('gb'))
+# 1 MiB (binary) to bytes
+print(MebiByte(1).convert(Byte))   # 1048576
+
+# 1 GiB (binary) to MB (decimal)
+print(GibiByte(1).convert(MegaByte))  # 1073.741824
 ```
 
-#### Comparison Operators
-
-The data objects can also be compared to each other using the comparison operators (i.e. >, <, >=, etc). In this case, they similarly convert both values to bytes and compare that float object.
-Otherwise, if a float or int is supplied as the comparator, then it is assumed the number is in the same unit as the object being compared.
+### Comparisons
 ```python
-current_disk = GigaByte(1270)
+from datavalues import *
 
-if current_disk > 1000:
-    print(current_disk.convert('tb'))
-else:
-    print(current_disk)
+assert GigaByte(1) > MegaByte(500)
+assert KibiByte(1024) == MebiByte(1)
 ```
 
-### Returning Values
-The `__str__` method returns the value in a human-readable format which allows for clean output in code.  
-The `__repr__` method returns the creation string for the object.
+### Arithmetic
 ```python
-disk1 = Byte(150000000000).convert('gb')
-disk2 = MegaByte(328000).convert('gb')
+from datavalues import *
 
-# Printing the disks returns the human-readable value
-print(','.join([disk1, disk2]))
-## RETURNS:
-150.0 GB 328.0 GB
-
-# The object itself returns its creation string
-disk1
-## RETURNS:
-GigaByte(150.0)
+assert GigaByte(1) > MegaByte(500)
+assert KibiByte(1024) == MebiByte(1)
 ```
+
+## Why?
+Different systems report the *same* underlying data sizes differently:
+- **Proxmox VE**: `16 GiB RAM`
+- **NetBox**: `16 GB RAM`
+
+Both refer to the same ~17.18 billion bytes, but expressed in different units.  
+**DataValues** eliminiates the guesswork by normalizing all operations through a consistent baseline (bits).
+
+## License
+MIT - Feel free to use, extend, and contribute.
+
+
+## Supported Units
+
+### Core Units
+
+| Unit       | Symbol | Bytes equivalent | Class         |
+| ---------- | ------ | ---------------- | ------------- |
+| Bit        | b      | 1/8 byte         | `Bit`         |
+| Byte       | B      | 1 byte           | `Byte`        |
+
+### SI (Decimal, base 1000)
+
+| Unit       | Symbol | Bytes equivalent | Class         |
+| ---------- | ------ | ---------------- | ------------- |
+| Kilobit    | kb     | 10³ bits         | `KiloBit`     |
+| Kilobyte   | kB     | 10³ bytes        | `KiloByte`    |
+| Megabit    | Mb     | 10⁶ bits         | `MegaBit`     |
+| Megabyte   | MB     | 10⁶ bytes        | `MegaByte`    |
+| Gigabit    | Gb     | 10⁹ bits         | `GigaBit`     |
+| Gigabyte   | GB     | 10⁹ bytes        | `GigaByte`    |
+| Terabit    | Tb     | 10¹² bits        | `TeraBit`     |
+| Terabyte   | TB     | 10¹² bytes       | `TeraByte`    |
+| Petabit    | Pb     | 10¹⁵ bits        | `PetaBit`     |
+| Petabyte   | PB     | 10¹⁵ bytes       | `PetaByte`    |
+| Exabit     | Eb     | 10¹⁸ bits        | `ExaBit`      |
+| Exabyte    | EB     | 10¹⁸ bytes       | `ExaByte`     |
+| Zettabit   | Zb     | 10²¹ bits        | `ZettaBit`    |
+| Zettabyte  | ZB     | 10²¹ bytes       | `ZettaByte`   |
+| Yottabit   | Yb     | 10²⁴ bits        | `YottaBit`    |
+| Yottabyte  | YB     | 10²⁴ bytes       | `YottaByte`   |
+| Ronnabit   | Rb     | 10²⁷ bits        | `RonnaBit`    |
+| Ronnabyte  | RB     | 10²⁷ bytes       | `RonnaByte`   |
+| Quettabit  | Qb     | 10³⁰ bits        | `QuettaBit`   |
+| Quettabyte | QB     | 10³⁰ bytes       | `QuettaByte`  |
+
+### IEC (Binary, base 1024)
+
+| Unit      | Symbol | Bytes equivalent | Class         |
+| --------- | ------ | ---------------- | ------------- |
+| Kibibit   | Kib    | 2¹⁰ bits         | `KibiBit`     |
+| Kibibyte  | KiB    | 2¹⁰ bytes        | `KibiByte`    |
+| Mebibit   | Mib    | 2²⁰ bits         | `MebiBit`     |
+| Mebibyte  | MiB    | 2²⁰ bytes        | `MebiByte`    |
+| Gibibit   | Gib    | 2³⁰ bits         | `GibiBit`     |
+| Gibibyte  | GiB    | 2³⁰ bytes        | `GibiByte`    |
+| Tebibit   | Tib    | 2⁴⁰ bits         | `TebiBit`     |
+| Tebibyte  | TiB    | 2⁴⁰ bytes        | `TebiByte`    |
+| Pebibit   | Pib    | 2⁵⁰ bits         | `PebiBit`     |
+| Pebibyte  | PiB    | 2⁵⁰ bytes        | `PebiByte`    |
+| Exbibit   | Eib    | 2⁶⁰ bits         | `ExbiBit`     |
+| Exbibyte  | EiB    | 2⁶⁰ bytes        | `ExbiByte`    |
+| Zebibit   | Zib    | 2⁷⁰ bits         | `ZebiBit`     |
+| Zebibyte  | ZiB    | 2⁷⁰ bytes        | `ZebiByte`    |
+| Yobibit   | Yib    | 2⁸⁰ bits         | `YobiBit`     |
+| Yobibyte  | YiB    | 2⁸⁰ bytes        | `YobiByte`    |
+| Robibit   | Rib    | 2⁹⁰ bits         | `RobiBit`     |
+| Robibyte  | RiB    | 2⁹⁰ bytes        | `RobiByte`    |
+| Quebibit  | Qib    | 2¹⁰⁰ bits        | `QuebiBit`    |
+| Quebibyte | QiB    | 2¹⁰⁰ bytes       | `QuebiByte`   |
+
+## License
+MIT - Feel free to use, extend, and contribute.

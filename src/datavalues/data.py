@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from abc import ABCMeta
-from functools import wraps
+from abc import ABCMeta as _ABCMeta
+from functools import wraps as _wraps
+
 
 def _format(num: float):
     try:
@@ -12,7 +13,8 @@ def _format(num: float):
     except IndexError:
         return f"{'{:,}'.format(int(num))}"
 
-class BaseDataModel(metaclass=ABCMeta):
+
+class _BaseByteModel(metaclass=_ABCMeta):
     _base_factor = 1000
 
     def __init__(self, value: float, base: int = 1000, bits: bool = False):
@@ -66,16 +68,17 @@ class BaseDataModel(metaclass=ABCMeta):
         self.value = value / 8 if bits else value
 
     def _validate(func):
-        @wraps(func)
+        @_wraps(func)
         def wrapper(self, other):
             if type(other).__name__ not in globals():
                 if not (isinstance(other, int) or
-                        issubclass(other, int) or # Allow subclasses for third-party compatibility
+                        issubclass(other, int) or  # Allow subclasses for third-party compatibility
                         isinstance(other, float) or
-                        issubclass(other, float) or # Allow subclasses for third-party compatibility
-                        issubclass(other.__class__, BaseDataModel)):
+                        issubclass(other, float) or  # Allow subclasses for third-party compatibility
+                        issubclass(other.__class__, _BaseByteModel)):
                     raise TypeError(f'Must either pass a float/int or an object from {self.__module__}')
             return func(self, other)
+
         return wrapper
 
     def __repr__(self):
@@ -85,97 +88,97 @@ class BaseDataModel(metaclass=ABCMeta):
         if self.formatted:
             return f'{_format(self.value)} {self.unit}'
         return f'{self.value} {self.unit}'
-    
+
     def to_bytes(self):
         return self.convert('byte').value
 
     @_validate
     def __add__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value + other, base=self._base_factor)
         return Byte(self.to_bytes() + other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __sub__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value - other, base=self._base_factor)
         return Byte(self.to_bytes() - other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
-    
+
     @_validate
     def __mul__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value * other, base=self._base_factor)
         raise TypeError('Cannot multiply data objects')
-    
+
     @_validate
     def __truediv__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value / other, base=self._base_factor)
         return self.to_bytes() / other.to_bytes()
-    
+
     @_validate
     def __floordiv__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value // other, base=self._base_factor)
         return self.to_bytes() // other.to_bytes()
-    
+
     @_validate
     def __iadd__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value + other, base=self._base_factor)
         return Byte(self.to_bytes() + other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __isub__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value - other, base=self._base_factor)
         return Byte(self.to_bytes() - other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __imul__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value * other, base=self._base_factor)
         raise TypeError('Cannot multiply data objects')
-    
+
     @_validate
     def __itruediv__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value / other, base=self._base_factor)
         return Byte(self.to_bytes() / other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __ifloordiv__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.__class__(self.value // other, base=self._base_factor)
         return Byte(self.to_bytes() // other.to_bytes(), base=self._base_factor).convert(self.unit.lower())
 
     @_validate
     def __eq__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.value == other
         return self.to_bytes() == other.to_bytes()
-    
+
     @_validate
     def __lt__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.value < other
         return self.to_bytes() < other.to_bytes()
 
     @_validate
     def __gt__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.value > other
         return self.to_bytes() > other.to_bytes()
-    
+
     @_validate
     def __le__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.value <= other
         return self.to_bytes() <= other.to_bytes()
 
     @_validate
     def __ge__(self, other):
-        if not issubclass(other.__class__, BaseDataModel):
+        if not issubclass(other.__class__, _BaseByteModel):
             return self.value >= other
         return self.to_bytes() >= other.to_bytes()
 
@@ -190,46 +193,47 @@ class BaseDataModel(metaclass=ABCMeta):
         else:
             unit = dict((value['unit'].lower(), key) for key, value in self._unit_data.items()).get(unit.lower())
         try:
-            dest_class = unit.title().replace('b','B')
+            dest_class = unit.title().replace('b', 'B')
             if dest_class in globals():
-                return globals()[dest_class](self.value * self._conversion_factor / self._unit_data[unit]['conversion_factor'])
+                return globals()[dest_class](
+                    self.value * self._conversion_factor / self._unit_data[unit]['conversion_factor'])
             else:
                 raise RuntimeError(f'You must import data.data.{dest_class} to convert to {unit}.')
         except KeyError:
             raise ValueError(f"Invalid unit specified ({unit}). Select a valid unit: {self._units_short} ")
 
 
-class Byte(BaseDataModel):
+class Byte(_BaseByteModel):
     ...
 
 
-class KiloByte(BaseDataModel):
+class KiloByte(_BaseByteModel):
     ...
 
 
-class MegaByte(BaseDataModel):
+class MegaByte(_BaseByteModel):
     ...
 
 
-class GigaByte(BaseDataModel):
+class GigaByte(_BaseByteModel):
     ...
 
 
-class TeraByte(BaseDataModel):
+class TeraByte(_BaseByteModel):
     ...
 
 
-class PetaByte(BaseDataModel):
+class PetaByte(_BaseByteModel):
     ...
 
 
-class ExaByte(BaseDataModel):
+class ExaByte(_BaseByteModel):
     ...
 
 
-class ZettaByte(BaseDataModel):
+class ZettaByte(_BaseByteModel):
     ...
 
 
-class YottaByte(BaseDataModel):
+class YottaByte(_BaseByteModel):
     ...
