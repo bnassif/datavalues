@@ -34,7 +34,12 @@ class BaseDataClass(metaclass=_ABCMeta):
         return f'{self.value} {self.__class__.__name__}s'
     
     def __init__(self, value: float|int):
-        self.value = value
+        if type(value) in [float, int]:
+            self.value = value
+        elif issubclass(value.__class__, BaseDataClass):
+            self.value = value.convert(self.__class__).value
+        else:
+            raise ValueError(f'Invalid value provided: {type(value)}')
 
     def to_bits(self):
         """This method will convert any data unit into the base bits unit for further maths

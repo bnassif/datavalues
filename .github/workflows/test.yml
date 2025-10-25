@@ -23,9 +23,6 @@ jobs:
 
       - name: Run Tests
         run: |
-          # Install the checked-out version
           python -m pip install ./
-          # Install pytest
           python -m pip install pytest
-          # Run all tests
           make run_tests

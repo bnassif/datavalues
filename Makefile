@@ -58,6 +58,10 @@ release: clean build
 .PHONY: clean
 clean: ## Remove existing versioned stage dir
 	rm -rf "$(OUT_ROOT)"
+	rm -rf "$(ROOT_DIR)/.pytest_cache/"
+	rm -rf "$(ROOT_DIR)/build/"
+	rm -rf "$(PKG_DIR).egg-info/"
+	find -type d -name "__pycache__" -exec rm -rf {} \;
 
 .PHONY: build
 build: version ## Build PyPi Package

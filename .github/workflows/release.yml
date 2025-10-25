@@ -45,7 +45,6 @@ jobs:
           # Ensure dist dir is fresh
           rm -rf dist
           mkdir -p dist
-          # Your Makefile's `release` should populate ./dist/
           make release VERSION="$VERSION"
           echo "Artifacts:"
           ls -l dist || true
