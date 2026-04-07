@@ -5,22 +5,15 @@
 
 DataValues is a Python package for handling data sizes (bits/bytes) with full support for both SI (decimal) and IEC (binary) prefixes.
 
-Many systems disagree on how to report storage or memory sizes:
-
-- Proxmox VE reports in GiB (binary).
-- NetBox reports in GB (decimal).
-- Vendors often switch between bits vs bytes.
-
-This package smooths out those inconsistencies by providing an object-oriented interface for conversion, arithmetic, and comparison across all supported units.
-
 ## Features
 
-- Supports bits and bytes.
-- Full range of SI (kilo, mega, giga, …) and IEC (kibi, mebi, gibi, …) units.
-- Accurate conversions between decimal/binary forms.
-- Intuitive comparisons (>, <, ==, >=, <=).
-- Safe arithmetic with unit awareness (+, -, *, /, +=, etc.).
-- Simple API that feels natural in Python.
+- Supports bits and bytes
+- Full range of SI (kilo, mega, giga, …) and IEC (kibi, mebi, gibi, …) units
+- Accurate conversions between decimal/binary forms
+- Parsing strings to corresponding units
+- Intuitive comparisons (>, <, ==, >=, <=)
+- Safe arithmetic with unit awareness (+, -, *, /, +=, etc.)
+- Simple API that feels natural in Python
 
 ## Installation
 
@@ -35,104 +28,168 @@ pip install git+'https://github.com/bnassif/datavalues.git'
 
 ### Coversion
 ```python
-from datavalues import *
+from datavalues import MegaByte, Byte
 
-# 1 MB (decimal) to bytes
-print(MegaByte(1).convert(Byte))   # 1000000
+# Convert using explicit classes
+print(MegaByte(1).convert(Byte))
+# 1000000.0 B
 
-# 1 MiB (binary) to bytes
-print(MebiByte(1).convert(Byte))   # 1048576
+# Convert using string parsing
+print(MegaByte(1).convert('byte'))
+# 1000000.0 B
+```
 
-# 1 GiB (binary) to MB (decimal)
-print(GibiByte(1).convert(MegaByte))  # 1073.741824
+### String Parsing
+```python
+from datavalues import from_string
+
+from_string('16GiB')
+# GibiByte(16)
+from_string('1000 megabytes')
+# MegaByte(1000)
+
+from datavalues import get_unit
+
+get_unit('tebibytes')
+# <class 'datavalues.binary.bytes.TebiByte'>
+get_unit('GB')
+# <class 'datavalues.metric.bytes.GigaByte'>
 ```
 
 ### Comparisons
 ```python
 from datavalues import *
 
-assert GigaByte(1) > MegaByte(500)
-assert KibiByte(1024) == MebiByte(1)
+GigaByte(1) > MegaByte(500)
+# True
+KibiByte(1024) == MebiByte(1)
+# True
 ```
 
 ### Arithmetic
 ```python
 from datavalues import *
 
-assert GigaByte(1) > MegaByte(500)
-assert KibiByte(1024) == MebiByte(1)
+GigaByte(1) - MegaByte(175)
+# GigaByte(0.825)
+
+KibiByte(1024) + MebiByte(14)
+# KibiByte(15360.0)
+
+GibiByte(1) / MebiByte(256)
+# 4.0
+
+GibiByte(1) / 4
+# GibiByte(0.25)
+
+Byte(250) * 4
+# Byte(1000)
 ```
 
 ## Why?
-Different systems report the *same* underlying data sizes differently:
-- **Proxmox VE**: `16 GiB RAM`
-- **NetBox**: `16 GB RAM`
+This project originally started as a way to reconcile differences in how NetBox reports and stores data sizes for disks and memory, specifically to align its expectations with the reality reported by hosts.
 
-Both refer to the same ~17.18 billion bytes, but expressed in different units.  
-**DataValues** eliminiates the guesswork by normalizing all operations through a consistent baseline (bits).
+Soon after, many other applications were found, including:
+- Computing data transfer times
+- Comparing and calculating data & bandwidth units
+- Determining storage requirements for backup retention policies
 
-## License
-MIT - Feel free to use, extend, and contribute.
-
+Thus, `datavalues` transitioned to a fully-featured library.
 
 ## Supported Units
 
-### Core Units
+Below are tables detailing all available units of measurement for data provided by the `datavalues` library.
 
-| Unit       | Symbol | Bytes equivalent | Class         |
-| ---------- | ------ | ---------------- | ------------- |
-| Bit        | b      | 1/8 byte         | `Bit`         |
-| Byte       | B      | 1 byte           | `Byte`        |
+Additional units will be added to this library as they are officially adopted.
 
-### SI (Decimal, base 1000)
+### SI
 
-| Unit       | Symbol | Bytes equivalent | Class         |
-| ---------- | ------ | ---------------- | ------------- |
-| Kilobit    | kb     | 10³ bits         | `KiloBit`     |
-| Kilobyte   | kB     | 10³ bytes        | `KiloByte`    |
-| Megabit    | Mb     | 10⁶ bits         | `MegaBit`     |
-| Megabyte   | MB     | 10⁶ bytes        | `MegaByte`    |
-| Gigabit    | Gb     | 10⁹ bits         | `GigaBit`     |
-| Gigabyte   | GB     | 10⁹ bytes        | `GigaByte`    |
-| Terabit    | Tb     | 10¹² bits        | `TeraBit`     |
-| Terabyte   | TB     | 10¹² bytes       | `TeraByte`    |
-| Petabit    | Pb     | 10¹⁵ bits        | `PetaBit`     |
-| Petabyte   | PB     | 10¹⁵ bytes       | `PetaByte`    |
-| Exabit     | Eb     | 10¹⁸ bits        | `ExaBit`      |
-| Exabyte    | EB     | 10¹⁸ bytes       | `ExaByte`     |
-| Zettabit   | Zb     | 10²¹ bits        | `ZettaBit`    |
-| Zettabyte  | ZB     | 10²¹ bytes       | `ZettaByte`   |
-| Yottabit   | Yb     | 10²⁴ bits        | `YottaBit`    |
-| Yottabyte  | YB     | 10²⁴ bytes       | `YottaByte`   |
-| Ronnabit   | Rb     | 10²⁷ bits        | `RonnaBit`    |
-| Ronnabyte  | RB     | 10²⁷ bytes       | `RonnaByte`   |
-| Quettabit  | Qb     | 10³⁰ bits        | `QuettaBit`   |
-| Quettabyte | QB     | 10³⁰ bytes       | `QuettaByte`  |
+SI (metric) units are based on powers of 10 (base-1000). These units use standard metric prefixes such as kilo-, mega-, and giga-, and can be applied to both bits and bytes.
 
-### IEC (Binary, base 1024)
+For more details on the SI/metric prefixes, visit [the Wikipedia article](https://en.wikipedia.org/wiki/Metric_prefix#List_of_SI_prefixes).
 
-| Unit      | Symbol | Bytes equivalent | Class         |
-| --------- | ------ | ---------------- | ------------- |
-| Kibibit   | Kib    | 2¹⁰ bits         | `KibiBit`     |
-| Kibibyte  | KiB    | 2¹⁰ bytes        | `KibiByte`    |
-| Mebibit   | Mib    | 2²⁰ bits         | `MebiBit`     |
-| Mebibyte  | MiB    | 2²⁰ bytes        | `MebiByte`    |
-| Gibibit   | Gib    | 2³⁰ bits         | `GibiBit`     |
-| Gibibyte  | GiB    | 2³⁰ bytes        | `GibiByte`    |
-| Tebibit   | Tib    | 2⁴⁰ bits         | `TebiBit`     |
-| Tebibyte  | TiB    | 2⁴⁰ bytes        | `TebiByte`    |
-| Pebibit   | Pib    | 2⁵⁰ bits         | `PebiBit`     |
-| Pebibyte  | PiB    | 2⁵⁰ bytes        | `PebiByte`    |
-| Exbibit   | Eib    | 2⁶⁰ bits         | `ExbiBit`     |
-| Exbibyte  | EiB    | 2⁶⁰ bytes        | `ExbiByte`    |
-| Zebibit   | Zib    | 2⁷⁰ bits         | `ZebiBit`     |
-| Zebibyte  | ZiB    | 2⁷⁰ bytes        | `ZebiByte`    |
-| Yobibit   | Yib    | 2⁸⁰ bits         | `YobiBit`     |
-| Yobibyte  | YiB    | 2⁸⁰ bytes        | `YobiByte`    |
-| Robibit   | Rib    | 2⁹⁰ bits         | `RobiBit`     |
-| Robibyte  | RiB    | 2⁹⁰ bytes        | `RobiByte`    |
-| Quebibit  | Qib    | 2¹⁰⁰ bits        | `QuebiBit`    |
-| Quebibyte | QiB    | 2¹⁰⁰ bytes       | `QuebiByte`   |
+#### Bits
+
+SI/metric bits are most commonly used in network transport measurements (e.g., Mbps, Gbps).
+
+| Unit | Symbol | Bit Conversion | Class |
+| ---- | ------ | -------------- | ----- |
+| Bit        | b  | 1 bit     | `datavalues.base.core.Bit`         |
+| Kilobit    | kb | 10³ bits  | `datavalues.metric.bits.KiloBit`   |
+| Megabit    | Mb | 10⁶ bits  | `datavalues.metric.bits.MegaBit`   |
+| Gigabit    | Gb | 10⁹ bits  | `datavalues.metric.bits.GigaBit`   |
+| Terabit    | Tb | 10¹² bits | `datavalues.metric.bits.TeraBit`   |
+| Petabit    | Pb | 10¹⁵ bits | `datavalues.metric.bits.PetaBit`   |
+| Exabit     | Eb | 10¹⁸ bits | `datavalues.metric.bits.ExaBit`    |
+| Zettabit   | Zb | 10²¹ bits | `datavalues.metric.bits.ZettaBit`  |
+| Yottabit   | Yb | 10²⁴ bits | `datavalues.metric.bits.YottaBit`  |
+| Ronnabit   | Rb | 10²⁷ bits | `datavalues.metric.bits.RonnaBit`  |
+| Quettabit  | Qb | 10³⁰ bits | `datavalues.metric.bits.QuettaBit` |
+
+#### Bytes
+
+SI/metric bytes (e.g., MB, GB) are widely used in marketing and user-facing representations of storage capacity.
+
+Historically, these units were often used ambiguously to represent binary quantities.  
+The [IEC 60027-2](https://en.wikipedia.org/wiki/IEC_60027-2) standard introduced IEC/binary units to remove this ambiguity, though SI units are still commonly used.
+
+| Unit | Symbol | Byte Conversion | Class |
+| ---- | ------ | --------------- | ----- |
+| Byte       | B  | 1 byte     | `datavalues.base.core.Byte`          |
+| Kilobyte   | kB | 10³ bytes  | `datavalues.metric.bytes.KiloByte`   |
+| Megabyte   | MB | 10⁶ bytes  | `datavalues.metric.bytes.MegaByte`   |
+| Gigabyte   | GB | 10⁹ bytes  | `datavalues.metric.bytes.GigaByte`   |
+| Terabyte   | TB | 10¹² bytes | `datavalues.metric.bytes.TeraByte`   |
+| Petabyte   | PB | 10¹⁵ bytes | `datavalues.metric.bytes.PetaByte`   |
+| Exabyte    | EB | 10¹⁸ bytes | `datavalues.metric.bytes.ExaByte`    |
+| Zettabyte  | ZB | 10²¹ bytes | `datavalues.metric.bytes.ZettaByte`  |
+| Yottabyte  | YB | 10²⁴ bytes | `datavalues.metric.bytes.YottaByte`  |
+| Ronnabyte  | RB | 10²⁷ bytes | `datavalues.metric.bytes.RonnaByte`  |
+| Quettabyte | QB | 10³⁰ bytes | `datavalues.metric.bytes.QuettaByte` |
+
+### IEC
+
+IEC (binary) units are based on powers of 2 (base-1024). These units use binary prefixes such as kibi-, mebi-, and gibi-, and are most commonly applied to bytes in computing contexts.
+
+For more details on the IEC/binary prefixes, visit [the Wikipedia article](https://en.wikipedia.org/wiki/Binary_prefix).
+
+#### Bits
+
+IEC/binary bits (e.g., Kib, Mib) are defined for consistency with binary prefixes, but are rarely used in practice compared to their byte counterparts.
+
+| Unit | Symbol | Bit Conversion | Class |
+| ---- | ------ | -------------- | ----- |
+| Bit      | b   | 1 bit     | `datavalues.base.core.Bit`       |
+| Kibibit  | Kib | 2¹⁰ bits  | `datavalues.binary.bits.KibiBit`  |
+| Mebibit  | Mib | 2²⁰ bits  | `datavalues.binary.bits.MebiBit`  |
+| Gibibit  | Gib | 2³⁰ bits  | `datavalues.binary.bits.GibiBit`  |
+| Tebibit  | Tib | 2⁴⁰ bits  | `datavalues.binary.bits.TebiBit`  |
+| Pebibit  | Pib | 2⁵⁰ bits  | `datavalues.binary.bits.PebiBit`  |
+| Exbibit  | Eib | 2⁶⁰ bits  | `datavalues.binary.bits.ExbiBit`  |
+| Zebibit  | Zib | 2⁷⁰ bits  | `datavalues.binary.bits.ZebiBit`  |
+| Yobibit  | Yib | 2⁸⁰ bits  | `datavalues.binary.bits.YobiBit`  |
+| Robibit  | Rib | 2⁹⁰ bits  | `datavalues.binary.bits.RobiBit`  |
+| Quebibit | Qib | 2¹⁰⁰ bits | `datavalues.binary.bits.QuebiBit` |
+
+#### Bytes
+
+IEC/binary bytes (e.g., KiB, MiB, GiB) are most commonly used in operating systems and technical contexts to represent storage and memory.
+
+These units were standardized by [IEC 60027-2](https://en.wikipedia.org/wiki/IEC_60027-2) to clearly distinguish binary-based values from SI/metric units.
+
+| Unit      | Symbol | Byte Conversion | Class       |
+| --------- | ------ | --------------- | ----------- |
+| Byte      | B   | 1 byte     | `datavalues.base.core.Byte`         |
+| Kibibyte  | KiB | 2¹⁰ bytes  | `datavalues.binary.bytes.KibiByte`  |
+| Mebibyte  | MiB | 2²⁰ bytes  | `datavalues.binary.bytes.MebiByte`  |
+| Gibibyte  | GiB | 2³⁰ bytes  | `datavalues.binary.bytes.GibiByte`  |
+| Tebibyte  | TiB | 2⁴⁰ bytes  | `datavalues.binary.bytes.TebiByte`  |
+| Pebibyte  | PiB | 2⁵⁰ bytes  | `datavalues.binary.bytes.PebiByte`  |
+| Exbibyte  | EiB | 2⁶⁰ bytes  | `datavalues.binary.bytes.ExbiByte`  |
+| Zebibyte  | ZiB | 2⁷⁰ bytes  | `datavalues.binary.bytes.ZebiByte`  |
+| Yobibyte  | YiB | 2⁸⁰ bytes  | `datavalues.binary.bytes.YobiByte`  |
+| Robibyte  | RiB | 2⁹⁰ bytes  | `datavalues.binary.bytes.RobiByte`  |
+| Quebibyte | QiB | 2¹⁰⁰ bytes | `datavalues.binary.bytes.QuebiByte` |
 
 ## License
 MIT - Feel free to use, extend, and contribute.
