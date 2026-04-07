@@ -26,7 +26,6 @@ jobs:
         id: ver
         run: |
           RAW_TAG="${{ github.event.release.tag_name }}"
-          # strip a leading 'v' if present (v1.2.3 -> 1.2.3)
           STRIPPED="${RAW_TAG#v}"
           echo "version=$STRIPPED" >> "$GITHUB_OUTPUT"
 
@@ -42,9 +41,6 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          # Ensure dist dir is fresh
-          rm -rf dist
-          mkdir -p dist
           make release VERSION="$VERSION"
           echo "Artifacts:"
           ls -l dist || true

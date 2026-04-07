@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "datavalues"
 authors = [
@@ -6,19 +10,21 @@ authors = [
 
 dynamic = ["version"]
 
-description = "Package for converting data units"
+description = "Python helpers for converting data units between metric and binary prefixes."
 readme = "README.md"
 
 requires-python = ">=3.10"
+keywords = ["conversion", "data", "units", "byte", "bit"]
 classifiers = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
     "Operating System :: OS Independent",
-    "Topic :: Software Development",
     "Programming Language :: Python :: 3",
-]
-keywords = [
-    "conversion", "data", "units", "byte", "helper"
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 license = "MIT"
@@ -30,5 +36,12 @@ license-files = [
 version = { attr = "datavalues.__version__.__version__" }
 
 [project.urls]
-homepage = "https://github.com/bnassif/datavalues"
-issues = "https://github.com/bnassif/datavalues/issues"
+Homepage = "https://github.com/bnassif/datavalues"
+Repository = "https://github.com/bnassif/datavalues"
+Issues = "https://github.com/bnassif/datavalues/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

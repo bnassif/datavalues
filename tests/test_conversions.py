@@ -1,10 +1,5 @@
 import pytest
-from datavalues import (
-    Bit, KiloBit, MegaBit, GigaBit, TeraBit, PetaBit, ExaBit, ZettaBit, YottaBit, RonnaBit, QuettaBit,
-    Byte, KiloByte, MegaByte, GigaByte, TeraByte, PetaByte, ExaByte, ZettaByte, YottaByte, RonnaByte, QuettaByte,
-    KibiBit, MebiBit, GibiBit, TebiBit, PebiBit, ExbiBit, ZebiBit, YobiBit, RobiBit, QuebiBit,
-    KibiByte, MebiByte, GibiByte, TebiByte, PebiByte, ExbiByte, ZebiByte, YobiByte, RobiByte, QuebiByte,
-)
+from datavalues import *
 
 @pytest.mark.parametrize("higher,lower,factor", [
     # Metric bits (×1000)
@@ -18,11 +13,6 @@ from datavalues import (
     (YottaBit, ZettaBit, 1000),
     (RonnaBit, YottaBit, 1000),
     (QuettaBit, RonnaBit, 1000),
-])
-def test_metric_bit_conversions(higher, lower, factor):
-    assert higher(1).convert(lower) == factor
-
-@pytest.mark.parametrize("higher,lower,factor", [
     # Metric bytes (×1000)
     (KiloByte, Byte, 1000),
     (MegaByte, KiloByte, 1000),
@@ -34,11 +24,6 @@ def test_metric_bit_conversions(higher, lower, factor):
     (YottaByte, ZettaByte, 1000),
     (RonnaByte, YottaByte, 1000),
     (QuettaByte, RonnaByte, 1000),
-])
-def test_metric_byte_conversions(higher, lower, factor):
-    assert higher(1).convert(lower) == factor
-
-@pytest.mark.parametrize("higher,lower,factor", [
     # Binary bits (×1024)
     (KibiBit, Bit, 1024),
     (MebiBit, KibiBit, 1024),
@@ -50,11 +35,6 @@ def test_metric_byte_conversions(higher, lower, factor):
     (YobiBit, ZebiBit, 1024),
     (RobiBit, YobiBit, 1024),
     (QuebiBit, RobiBit, 1024),
-])
-def test_binary_bit_conversions(higher, lower, factor):
-    assert higher(1).convert(lower) == factor
-
-@pytest.mark.parametrize("higher,lower,factor", [
     # Binary bytes (×1024)
     (KibiByte, Byte, 1024),
     (MebiByte, KibiByte, 1024),
@@ -67,5 +47,6 @@ def test_binary_bit_conversions(higher, lower, factor):
     (RobiByte, YobiByte, 1024),
     (QuebiByte, RobiByte, 1024),
 ])
-def test_binary_byte_conversions(higher, lower, factor):
+def test_conversion(higher, lower, factor):
     assert higher(1).convert(lower) == factor
+    assert lower(1).convert(higher) == 1/factor

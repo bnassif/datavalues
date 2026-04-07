@@ -2,6 +2,8 @@ from datavalues.metric.bits import *
 from datavalues.metric.bytes import *
 
 __all__ = [
+    'Bit',
+    'Byte',
     'KiloBit',
     'KiloByte',
     'MegaBit',
